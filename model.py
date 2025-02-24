@@ -5,17 +5,14 @@ import torch.nn.functional as F
 
 
 class VanillaCGN(nn.Module):
-    def __init__(self, input_dim, node_dim, n_layers, adj_mat) -> None:
+    def __init__(self, input_dim, node_dim, n_layers) -> None:
         super().__init__()
-        self.adj_mat = adj_mat
         self.input_dim = input_dim
         self.node_dim = node_dim
         self.n_layers = n_layers
         self.U0 = nn.init.kaiming_normal_(torch.empty(node_dim, input_dim))
         self.b0 = nn.Parameter(torch.randn(node_dim))
-        self.convLayers = [
-            ConvNetLayer(self.node_dim, self.adj_mat) for _ in range(self.n_layers)
-        ]
+        self.convLayers = [ConvNetLayer(self.node_dim) for _ in range(self.n_layers)]
 
     def forward(self, x):
         x = x @ self.U0 + self.b0  # self.b0 is broadcasted properly?
@@ -25,16 +22,27 @@ class VanillaCGN(nn.Module):
 
 
 class ConvNetLayer(nn.Module):
-    def __init__(self, node_dim, adj_mat) -> None:
+    def __init__(self, node_dim) -> None:
         super().__init__()
         self.U = nn.Parameter(torch.randn(node_dim, node_dim))
-        self.adj_mat = adj_mat
+
+    @staticmethod
+    def build_adj_mat(edge_index):
+        """Build the adjacency matrix of a graph from edge_index that looks like this: [[1, 4, 5, 6], [2, 3, 3, 5]]
+        cf. https://huggingface.co/datasets/graphs-datasets/ZINC for more details"""
+        n_nodes = max(max(edge_index[0]), max(edge_index[1]))
+        n_edges = len(edge_index[0])
+        adj_mat = torch.zeros((n_nodes, n_nodes))
+        for i in range(n_edges):
+            adj_mat[edge_index[0][i], edge_index[1][i]] = 1
+        return adj_mat
 
     def forward(self, x):
         new_x = torch.empty_like(x)
+        adj_mat = build_adj_mat(x)
         for i in range(x.shape[0]):
-            deg_i = self.adj_mat[:, i].sum()  # we look at the neighbors pointing to i
-            mask_i = self.adj_mat[:, i] > 0
+            deg_i = adj_mat[:, i].sum()
+            mask_i = adj_mat[:, i] > 0
             new_x[i, :] = F.relu(
                 self.U @ (x[mask_i, :].sum(dim=0)).to(torch.float32) / deg_i
             )
