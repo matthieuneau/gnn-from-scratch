@@ -1,21 +1,25 @@
 """Train script designed to work on Zinc dataset. Will make it more modular later"""
 
+import yaml
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from datasets import load_dataset
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 
 from model import VanillaCGN
 
-# torch.set_default_dtype(torch.float32)
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
 
-input_dim = 1
-node_dim = 10
-n_epochs = 2
-train_size = 100
-eval_size = 100
-batch_size = 1  # TODO: Implement batch support
+input_dim = config["input_dim"]
+node_dim = config["node_dim"]
+n_epochs = config["n_epochs"]
+train_size = config["train_size"]
+eval_size = config["eval_size"]
+batch_size = config["batch_size"]  # TODO: Implement batch support
+n_layer = config["n_layers"]
 model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=2)
 
 train_dataset = load_dataset("graphs-datasets/ZINC", split=f"train[:{train_size}]")
@@ -74,7 +78,7 @@ eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=col
 
 batch = next(iter(train_dataloader))
 
-for i in range(n_epochs):
+for i in tqdm(range(n_epochs)):
     total_loss = 0
     for j, batch in enumerate(train_dataloader):
         optimizer.zero_grad()
