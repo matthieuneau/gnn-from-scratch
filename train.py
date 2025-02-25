@@ -1,7 +1,5 @@
 """Train script designed to work on Zinc dataset. Will make it more modular later"""
 
-from torchinfo import summary
-from itertools import count
 import yaml
 import torch
 import torch.nn as nn
@@ -9,6 +7,7 @@ import torch.optim as optim
 from datasets import load_dataset
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+import wandb
 
 from model import VanillaCGN
 
@@ -59,7 +58,7 @@ eval_dataset = eval_dataset.select_columns(["node_feat", "adj_mat", "y"])
 
 
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
 def collate_fn(batch):
@@ -95,15 +94,17 @@ for i in tqdm(range(n_epochs)):
         train_loss += loss
         loss.backward()
         optimizer.step()
-    train_loss /= len(train_dataset)
+    train_loss /= len(train_dataloader)  # or divide by len(dataset) ??
 
     with torch.no_grad():
-        valid_loss = 0
+        eval_loss = 0
         for j, batch in tqdm(enumerate(eval_dataloader)):
             y_pred = model(batch["node_feat"], batch["adj_mat"])
             y_true = batch["y"]
-            valid_loss += loss_fn(y_pred, y_true)
-        valid_loss /= len(eval_dataset)
+            eval_loss += loss_fn(y_pred, y_true)
+        eval_loss /= len(eval_dataloader)  # or divide by len(dataset) ??
+
+    wandb.log({"train_loss": train_loss, "eval_loss": eval_loss, "epoch": i})
 
     print(f"train loss {train_loss} at epoch {i}")
-    print(f"valid loss {valid_loss} at epoch {i}")
+    print(f"valid loss {eval_loss} at epoch {i}")

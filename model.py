@@ -9,7 +9,7 @@ class VanillaCGN(nn.Module):
         self.input_dim = input_dim
         self.node_dim = node_dim
         self.n_layers = n_layers
-        self.U0 = nn.init.kaiming_normal_(torch.empty(input_dim, node_dim))
+        self.U0 = nn.init.xavier_normal_(torch.empty(input_dim, node_dim))
         self.b0 = nn.Parameter(torch.randn(node_dim))
         self.convLayers = nn.ModuleList(
             [ConvNetLayer(self.node_dim) for _ in range(self.n_layers)]
@@ -45,8 +45,8 @@ class GraphRegressionReadoutLayer(nn.Module):
     def __init__(self, node_dim) -> None:
         super().__init__()
         self.node_dim = node_dim
-        self.Q = nn.Parameter(nn.init.kaiming_normal_(torch.empty(node_dim, node_dim)))
-        self.P = nn.Parameter(nn.init.kaiming_normal_(torch.empty((1, node_dim))))
+        self.Q = nn.Parameter(nn.init.xavier_normal_(torch.empty(node_dim, node_dim)))
+        self.P = nn.Parameter(nn.init.xavier_normal_(torch.empty((1, node_dim))))
 
     def forward(self, x):
         x = x.sum(dim=0) / x.shape[0]
