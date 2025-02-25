@@ -9,16 +9,19 @@ class VanillaCGN(nn.Module):
         self.input_dim = input_dim
         self.node_dim = node_dim
         self.n_layers = n_layers
-        self.U0 = nn.init.kaiming_normal_(torch.empty(node_dim, input_dim))
+        self.U0 = nn.init.kaiming_normal_(torch.empty(input_dim, node_dim))
         self.b0 = nn.Parameter(torch.randn(node_dim))
         self.convLayers = nn.ModuleList(
             [ConvNetLayer(self.node_dim) for _ in range(self.n_layers)]
         )
+        self.readOutLayer = GraphRegressionReadoutLayer(node_dim=node_dim)
 
     def forward(self, x, adj_mat):
         x = x @ self.U0 + self.b0  # self.b0 is broadcasted properly?
         for i in range(self.n_layers):
             x = self.convLayers[i](x, adj_mat)
+        x = x.sum(dim=0)  # Check
+        x = self.readOutLayer(x)
         return x
 
 
@@ -36,6 +39,17 @@ class ConvNetLayer(nn.Module):
                 self.U @ (x[mask_i, :].sum(dim=0)).to(torch.float32) / deg_i
             )
         return new_x
+
+
+class GraphRegressionReadoutLayer(nn.Module):
+    def __init__(self, node_dim) -> None:
+        super().__init__()
+        self.node_dim = node_dim
+        self.Q = nn.Parameter(nn.init.kaiming_normal_(torch.empty(node_dim, node_dim)))
+        self.P = nn.Parameter(nn.init.kaiming_normal_(torch.empty((1, node_dim))))
+
+    def forward(self, x):
+        return (self.P @ F.relu(self.Q @ x)).squeeze()
 
 
 if __name__ == "__main__":

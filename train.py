@@ -36,30 +36,58 @@ def build_adj_mat(example):
     return example
 
 
+def to_float_tensor(example):
+    return {
+        "node_feat": torch.tensor(example["node_feat"], dtype=torch.float32).tolist(),
+        "adj_mat": torch.tensor(example["adj_mat"], dtype=torch.float32).tolist(),
+        "y": torch.tensor(example["y"], dtype=torch.float32).tolist(),
+    }
+
+
 train_dataset = train_dataset.map(build_adj_mat)
 train_dataset = train_dataset.select_columns(["node_feat", "adj_mat", "y"])
 eval_dataset = eval_dataset.map(build_adj_mat)
 eval_dataset = eval_dataset.select_columns(["node_feat", "adj_mat", "y"])
 
+
 loss_fn = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
-eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size)
+
+def collate_fn(batch):
+    """Convert dataset columns to torch.float32 inside the DataLoader."""
+    return {
+        "node_feat": torch.stack(
+            [torch.tensor(b["node_feat"], dtype=torch.float32) for b in batch]
+        ),
+        "adj_mat": torch.stack(
+            [torch.tensor(b["adj_mat"], dtype=torch.float32) for b in batch]
+        ),
+        "y": torch.stack([torch.tensor(b["y"], dtype=torch.float32) for b in batch]),
+    }
+
+
+train_dataloader = DataLoader(
+    train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn
+)
+eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=collate_fn)
 
 batch = next(iter(train_dataloader))
-print(batch)
 
 for i in range(n_epochs):
     total_loss = 0
     for j, batch in enumerate(train_dataloader):
         optimizer.zero_grad()
+        # print(batch["node_feat"])
+        # print(batch["adj_mat"])
+        # exit()
         y_pred = model(batch["node_feat"], batch["adj_mat"])
         y_true = batch["y"]
         loss = loss_fn(y_pred, y_true)
         total_loss += loss
         loss.backward()
         optimizer.step()
+        exit()
     total_loss /= len(train_dataset)
     print(f"loss {total_loss} at epoch {i}")
 
