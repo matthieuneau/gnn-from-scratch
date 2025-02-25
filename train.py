@@ -1,5 +1,7 @@
 """Train script designed to work on Zinc dataset. Will make it more modular later"""
 
+from itertools import count
+from utils import count_parameters
 import yaml
 import torch
 import torch.nn as nn
@@ -19,8 +21,10 @@ n_epochs = config["n_epochs"]
 train_size = config["train_size"]
 eval_size = config["eval_size"]
 batch_size = config["batch_size"]  # TODO: Implement batch support
-n_layer = config["n_layers"]
-model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=2)
+n_layers = config["n_layers"]
+model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=n_layers)
+# print(count_parameters(model))
+# exit()
 
 train_dataset = load_dataset("graphs-datasets/ZINC", split=f"train[:{train_size}]")
 eval_dataset = load_dataset("graphs-datasets/ZINC", split=f"validation[:{eval_size}]")
@@ -80,6 +84,7 @@ batch = next(iter(train_dataloader))
 
 for i in tqdm(range(n_epochs)):
     total_loss = 0
+    print("len train ds", len(train_dataset))
     for j, batch in enumerate(train_dataloader):
         optimizer.zero_grad()
         # print(batch["node_feat"])
@@ -92,6 +97,3 @@ for i in tqdm(range(n_epochs)):
         optimizer.step()
     total_loss /= len(train_dataset)
     print(f"loss {total_loss} at epoch {i}")
-
-
-# print(train_dataset[0])
