@@ -15,6 +15,8 @@ from model import VanillaCGN
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
+wandb.init(project="my-awesome-project", config=config)
+
 input_dim = config["input_dim"]
 node_dim = config["node_dim"]
 n_epochs = config["n_epochs"]
@@ -81,7 +83,7 @@ eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=col
 batch = next(iter(train_dataloader))
 
 for i in tqdm(range(n_epochs)):
-    total_loss = 0
+    train_loss = 0
     print("len train ds", len(train_dataset))
     for j, batch in tqdm(enumerate(train_dataloader)):
         optimizer.zero_grad()
@@ -90,8 +92,18 @@ for i in tqdm(range(n_epochs)):
         y_pred = model(batch["node_feat"], batch["adj_mat"])
         y_true = batch["y"]
         loss = loss_fn(y_pred, y_true)
-        total_loss += loss
+        train_loss += loss
         loss.backward()
         optimizer.step()
-    total_loss /= len(train_dataset)
-    print(f"loss {total_loss} at epoch {i}")
+    train_loss /= len(train_dataset)
+
+    with torch.no_grad():
+        valid_loss = 0
+        for j, batch in tqdm(enumerate(eval_dataloader)):
+            y_pred = model(batch["node_feat"], batch["adj_mat"])
+            y_true = batch["y"]
+            valid_loss += loss_fn(y_pred, y_true)
+        valid_loss /= len(eval_dataset)
+
+    print(f"train loss {train_loss} at epoch {i}")
+    print(f"valid loss {valid_loss} at epoch {i}")
