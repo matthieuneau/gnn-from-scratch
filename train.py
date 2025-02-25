@@ -1,7 +1,7 @@
 """Train script designed to work on Zinc dataset. Will make it more modular later"""
 
+from torchinfo import summary
 from itertools import count
-from utils import count_parameters
 import yaml
 import torch
 import torch.nn as nn
@@ -23,8 +23,6 @@ eval_size = config["eval_size"]
 batch_size = config["batch_size"]  # TODO: Implement batch support
 n_layers = config["n_layers"]
 model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=n_layers)
-# print(count_parameters(model))
-# exit()
 
 train_dataset = load_dataset("graphs-datasets/ZINC", split=f"train[:{train_size}]")
 eval_dataset = load_dataset("graphs-datasets/ZINC", split=f"validation[:{eval_size}]")
@@ -85,7 +83,7 @@ batch = next(iter(train_dataloader))
 for i in tqdm(range(n_epochs)):
     total_loss = 0
     print("len train ds", len(train_dataset))
-    for j, batch in enumerate(train_dataloader):
+    for j, batch in tqdm(enumerate(train_dataloader)):
         optimizer.zero_grad()
         # print(batch["node_feat"])
         # print(batch["adj_mat"])
