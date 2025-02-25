@@ -80,14 +80,12 @@ for i in range(n_epochs):
         optimizer.zero_grad()
         # print(batch["node_feat"])
         # print(batch["adj_mat"])
-        # exit()
         y_pred = model(batch["node_feat"], batch["adj_mat"])
         y_true = batch["y"]
         loss = loss_fn(y_pred, y_true)
         total_loss += loss
         loss.backward()
         optimizer.step()
-        exit()
     total_loss /= len(train_dataset)
     print(f"loss {total_loss} at epoch {i}")
 

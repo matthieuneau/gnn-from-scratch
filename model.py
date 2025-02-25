@@ -49,6 +49,7 @@ class GraphRegressionReadoutLayer(nn.Module):
         self.P = nn.Parameter(nn.init.kaiming_normal_(torch.empty((1, node_dim))))
 
     def forward(self, x):
+        x = x.sum(dim=0) / x.shape[0]
         return (self.P @ F.relu(self.Q @ x)).squeeze()
 
 
