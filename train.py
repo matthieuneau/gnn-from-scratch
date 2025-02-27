@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 import wandb
 
 from model import VanillaCGN
+from utils import run_inference
 
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
@@ -23,6 +24,8 @@ train_size = config["train_size"]
 eval_size = config["eval_size"]
 batch_size = config["batch_size"]  # TODO: Implement batch support
 n_layers = config["n_layers"]
+lr = float(config["lr"])
+
 model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=n_layers)
 
 train_dataset = load_dataset("graphs-datasets/ZINC", split=f"train[:{train_size}]")
@@ -58,7 +61,10 @@ eval_dataset = eval_dataset.select_columns(["node_feat", "adj_mat", "y"])
 
 
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-4)
+optimizer = optim.Adam(model.parameters(), lr=lr)
+# scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
+#     optimizer, T_0=3, eta_min=1e-5
+# )
 
 
 def collate_fn(batch):
@@ -81,13 +87,12 @@ eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=col
 
 batch = next(iter(train_dataloader))
 
+
 for i in tqdm(range(n_epochs)):
     train_loss = 0
-    print("len train ds", len(train_dataset))
+    # print("lr: ", scheduler.get_lr())
     for j, batch in tqdm(enumerate(train_dataloader)):
         optimizer.zero_grad()
-        # print(batch["node_feat"])
-        # print(batch["adj_mat"])
         y_pred = model(batch["node_feat"], batch["adj_mat"])
         y_true = batch["y"]
         loss = loss_fn(y_pred, y_true)
@@ -104,7 +109,9 @@ for i in tqdm(range(n_epochs)):
             eval_loss += loss_fn(y_pred, y_true)
         eval_loss /= len(eval_dataloader)  # or divide by len(dataset) ??
 
+    # scheduler.step()
     wandb.log({"train_loss": train_loss, "eval_loss": eval_loss, "epoch": i})
 
     print(f"train loss {train_loss} at epoch {i}")
     print(f"valid loss {eval_loss} at epoch {i}")
+    run_inference(model, 5, train_dataloader)

@@ -21,6 +21,6 @@ train_size = config["train_size"]
 eval_size = config["eval_size"]
 batch_size = config["batch_size"]  # TODO: Implement batch support
 n_layers = config["n_layers"]
-model = VanillaCGN(input_dim=input_dim, node_dim=100, n_layers=4)
+model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=n_layers)
 summary(model)
 exit()
