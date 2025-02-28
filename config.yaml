@@ -1,8 +1,8 @@
 n_epochs: 150
-batch_size: 1 # >1 not supported for now
-node_dim: 120
-lr: 1e-5
+batch_size: 16 # >1 not supported for now
+node_dim: 50
+lr: 1e-4
 input_dim: 1
-train_size: 10000
-eval_size: 1000
+train_size: 2000
+eval_size: 400
 n_layers: 4

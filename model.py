@@ -30,14 +30,17 @@ class ConvNetLayer(nn.Module):
         self.U = nn.Parameter(torch.randn(node_dim, node_dim))
 
     def forward(self, x, adj_mat):
-        new_x = torch.empty_like(x.squeeze())
-        for i in range(new_x.shape[0]):
-            deg_i = adj_mat[:, i].sum()
-            mask_i = adj_mat[:, i] > 0
-            new_x[i, :] = F.relu(
-                self.U @ (x[mask_i, :].sum(dim=0)).to(torch.float32) / deg_i
-            )
-        new_x = new_x.unsqueeze(0)  # To return a 3d batch
+        new_x = torch.empty_like(x)
+        node_degree = adj_mat.sum(axis=1)
+        for i in range(new_x.shape[1]):
+            deg_i = node_degree[:, i]
+            mask_i = adj_mat[:, :, i] > 0
+            mask_i = mask_i.unsqueeze(2).expand(-1, -1, x.size(2))
+            new_x[:, i, :] = F.relu(
+                ((x * mask_i).sum(axis=1)).to(torch.float32)
+                @ self.U
+                / deg_i.unsqueeze(1)
+            ).squeeze()
         return new_x
 
 

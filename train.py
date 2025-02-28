@@ -1,5 +1,6 @@
 """Train script designed to work on Zinc dataset. Will make it more modular later"""
 
+import torch.nn.functional as F
 import yaml
 import torch
 import torch.nn as nn
@@ -15,7 +16,7 @@ from utils import run_inference
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-wandb.init(project="my-awesome-project", config=config)
+wandb.init(project="gnn-from-scratch", config=config)
 
 input_dim = config["input_dim"]
 node_dim = config["node_dim"]
@@ -46,18 +47,32 @@ def build_adj_mat(example):
     return example
 
 
-def to_float_tensor(example):
-    return {
-        "node_feat": torch.tensor(example["node_feat"], dtype=torch.float32).tolist(),
-        "adj_mat": torch.tensor(example["adj_mat"], dtype=torch.float32).tolist(),
-        "y": torch.tensor(example["y"], dtype=torch.float32).tolist(),
-    }
+def padding(example, max_nodes):  # TODO: Add mean support
+    """To be applied after builing the adj mat.
+    # 'zeros' pads the node_feat matrix with zero vectors
+    # 'mean' pads the node_feat matrix with vectors equal to the mean of the nodes embeddings
+    The adj mat is always padded with zeros, except ones on the diagonal for stability when dividing by deg_i in the conv layer
+    """
+    node_dim = len(example["node_feat"][0])
+    n_nodes = len(example["node_feat"])
+    zeros = [0 for _ in range(node_dim)]
+    # print('zeros', zeros)
+    example["node_feat"] += [zeros for _ in range(max_nodes - n_nodes)]
+    example["adj_mat"] = torch.tensor(example["adj_mat"])
+    pad = (0, max_nodes - n_nodes, 0, max_nodes - n_nodes)
+    example["adj_mat"] = F.pad(example["adj_mat"], pad, "constant", 0)
+    example["adj_mat"].diagonal().fill_(1)
+    example["adj_mat"] = example["adj_mat"].tolist()
+    return example
 
 
+max_nodes = max(max(train_dataset["num_nodes"]), max(eval_dataset["num_nodes"]))
 train_dataset = train_dataset.map(build_adj_mat)
+train_dataset = train_dataset.map(lambda example: padding(example, max_nodes))
 train_dataset = train_dataset.select_columns(["node_feat", "adj_mat", "y"])
 eval_dataset = eval_dataset.map(build_adj_mat)
 eval_dataset = eval_dataset.select_columns(["node_feat", "adj_mat", "y"])
+eval_dataset = eval_dataset.map(lambda example: padding(example, max_nodes))
 
 
 loss_fn = nn.MSELoss()
