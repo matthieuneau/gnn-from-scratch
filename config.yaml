@@ -1,7 +1,7 @@
 n_epochs: 150
 batch_size: 1 # >1 not supported for now
 node_dim: 120
-lr: 1e-5
+lr: 3e-5
 input_dim: 1
 train_size: 10000
 eval_size: 1000
