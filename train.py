@@ -55,7 +55,7 @@ def padding(example, max_nodes):  # TODO: Add mean support
     """
     node_dim = len(example["node_feat"][0])
     n_nodes = len(example["node_feat"])
-    zeros = [0 for _ in range(node_dim)]
+    zeros = [-1 for _ in range(node_dim)]
     # print('zeros', zeros)
     example["node_feat"] += [zeros for _ in range(max_nodes - n_nodes)]
     example["adj_mat"] = torch.tensor(example["adj_mat"])
@@ -100,7 +100,8 @@ train_dataloader = DataLoader(
 )
 eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=collate_fn)
 
-batch = next(iter(train_dataloader))
+batch = next(iter(eval_dataloader))
+print("y_pred before training", model(batch["node_feat"], batch["adj_mat"]))
 
 
 for i in tqdm(range(n_epochs)):
@@ -114,7 +115,7 @@ for i in tqdm(range(n_epochs)):
         train_loss += loss
         loss.backward()
         optimizer.step()
-    train_loss /= len(train_dataloader)  # or divide by len(dataset) ??
+    train_loss /= len(train_dataloader)
 
     with torch.no_grad():
         eval_loss = 0
@@ -122,11 +123,11 @@ for i in tqdm(range(n_epochs)):
             y_pred = model(batch["node_feat"], batch["adj_mat"])
             y_true = batch["y"]
             eval_loss += loss_fn(y_pred, y_true)
-        eval_loss /= len(eval_dataloader)  # or divide by len(dataset) ??
+        eval_loss /= len(eval_dataloader)
 
     # scheduler.step()
     wandb.log({"train_loss": train_loss, "eval_loss": eval_loss, "epoch": i})
 
     print(f"train loss {train_loss} at epoch {i}")
     print(f"valid loss {eval_loss} at epoch {i}")
-    run_inference(model, 5, train_dataloader)
+    run_inference(model, 1, train_dataloader)
