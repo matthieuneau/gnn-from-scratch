@@ -15,7 +15,7 @@ from utils import run_inference
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-wandb.init(project="my-awesome-project", config=config)
+wandb.init(project="gnn-from-scratch", config=config)
 
 input_dim = config["input_dim"]
 node_dim = config["node_dim"]
@@ -87,18 +87,21 @@ eval_dataloader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=col
 
 batch = next(iter(train_dataloader))
 
+accumulation_steps = 4
 
 for i in tqdm(range(n_epochs)):
     train_loss = 0
     # print("lr: ", scheduler.get_lr())
     for j, batch in tqdm(enumerate(train_dataloader)):
-        optimizer.zero_grad()
         y_pred = model(batch["node_feat"], batch["adj_mat"])
         y_true = batch["y"]
         loss = loss_fn(y_pred, y_true)
-        train_loss += loss
+        train_loss += loss.item()
         loss.backward()
-        optimizer.step()
+        if (j + 1) % accumulation_steps == 0 or (j + 1) == len(train_dataloader):
+            optimizer.step()
+            optimizer.zero_grad()
+
     train_loss /= len(train_dataloader)  # or divide by len(dataset) ??
 
     with torch.no_grad():
