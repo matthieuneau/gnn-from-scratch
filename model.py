@@ -10,7 +10,9 @@ class VanillaCGN(nn.Module):
         self.node_dim = node_dim
         self.n_layers = n_layers
         self.U0 = nn.init.xavier_uniform_(torch.empty(input_dim, node_dim))
-        self.b0 = nn.Parameter(torch.randn(node_dim))
+        self.b0 = (
+            nn.Parameter(torch.randn(node_dim)) / 1e3
+        )  # hard coded to keep it small
         self.convLayers = nn.ModuleList(
             [ConvNetLayer(self.node_dim) for _ in range(self.n_layers)]
         )
@@ -27,7 +29,7 @@ class VanillaCGN(nn.Module):
 class ConvNetLayer(nn.Module):
     def __init__(self, node_dim) -> None:
         super().__init__()
-        self.U = nn.Parameter(torch.randn(node_dim, node_dim))
+        self.U = nn.Parameter(nn.init.xavier_uniform_(torch.empty(node_dim, node_dim)))
 
     def forward(self, x, adj_mat):
         new_x = torch.empty_like(x.squeeze())
