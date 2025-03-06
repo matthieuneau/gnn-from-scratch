@@ -50,3 +50,24 @@ class GraphRegressionReadoutLayer(nn.Module):
     def forward(self, x):
         x = x.sum(dim=1) / x.shape[1]  # dim 0 is batch size so we collapse along dim 1
         return (self.P @ F.leaky_relu_(self.Q @ x.T)).squeeze()
+
+
+class AttentionLayer(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(AttentionLayer, self).__init__()
+        self.W = nn.init.xavier_uniform_(torch.empty(output_dim, input_dim))
+        self.a = nn.init.xavier_uniform_(torch.empty(@*output_dim, 1)))
+        
+    def forward(self, x):
+        x = x @ self.W.T         # matrix containing the W*hi vectors
+        
+
+
+class GAT(nn.Module):
+    def __init__(self):
+        super(GAT, self).__init__()
+        self.fc3 = nn.Linear(50, 121)   # 121 classes for each node, 50 input dim
+
+    def forward(self, x, edge_index):
+        x = self.fc3(x)
+        return x
