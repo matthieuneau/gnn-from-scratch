@@ -35,7 +35,7 @@ class ConvNetLayer(nn.Module):
         for i in range(new_x.shape[0]):
             deg_i = adj_mat[:, i].sum()
             mask_i = adj_mat[:, i] > 0
-            new_x[i, :] = F.relu(self.U @ (x[mask_i, :].sum(dim=0)) / deg_i)
+            new_x[i, :] = F.leaky_relu_(self.U @ (x[mask_i, :].sum(dim=0)) / deg_i)
         new_x = new_x.unsqueeze(0)  # To return a 3d batch
         return new_x
 
@@ -49,4 +49,4 @@ class GraphRegressionReadoutLayer(nn.Module):
 
     def forward(self, x):
         x = x.sum(dim=1) / x.shape[1]  # dim 0 is batch size so we collapse along dim 1
-        return (self.P @ F.relu(self.Q @ x.T)).squeeze()
+        return (self.P @ F.leaky_relu_(self.Q @ x.T)).squeeze()

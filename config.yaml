@@ -1,8 +1,8 @@
-n_epochs: 50
+n_epochs: 100
 batch_size: 1 # >1 not supported for now
-node_dim: 80
-lr: 1e-4
+node_dim: 120
+lr: !!float 3e-5 # to enforce float when loaded
 input_dim: 1
-train_size: 2000
-eval_size: 500
+train_size: 10000
+eval_size: 1000
 n_layers: 4

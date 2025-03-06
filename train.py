@@ -1,5 +1,6 @@
 """Train script designed to work on Zinc dataset. Will make it more modular later"""
 
+import numpy as np
 import yaml
 import torch
 import torch.nn as nn
@@ -10,7 +11,7 @@ from torch.utils.data import DataLoader
 import wandb
 
 from model import VanillaCGN
-from utils import run_inference
+from utils import get_learning_rate, run_inference, set_learning_rate
 
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
@@ -24,7 +25,7 @@ train_size = config["train_size"]
 eval_size = config["eval_size"]
 batch_size = config["batch_size"]  # TODO: Implement batch support
 n_layers = config["n_layers"]
-lr = float(config["lr"])
+lr = config["lr"]
 
 model = VanillaCGN(input_dim=input_dim, node_dim=node_dim, n_layers=n_layers)
 
@@ -91,7 +92,8 @@ accumulation_steps = 4
 
 for i in tqdm(range(n_epochs)):
     train_loss = 0
-    # print("lr: ", scheduler.get_lr())
+    old_loss = 1e9  # Init with a very high value
+    print("lr: ", get_learning_rate(optimizer))
     for j, batch in tqdm(enumerate(train_dataloader)):
         y_pred = model(batch["node_feat"], batch["adj_mat"])
         y_true = batch["y"]
@@ -103,6 +105,10 @@ for i in tqdm(range(n_epochs)):
             optimizer.zero_grad()
 
     train_loss /= len(train_dataloader)  # or divide by len(dataset) ??
+    set_learning_rate(optimizer, config["lr"])
+    if np.abs((old_loss - train_loss) / train_loss) < 0.01:
+        set_learning_rate(optimizer, config["lr"] * 2)
+    old_loss = train_loss
 
     with torch.no_grad():
         eval_loss = 0
