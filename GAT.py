@@ -12,8 +12,7 @@ class GAT(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.fc1 = nn.Linear(hidden_dim, n_classes)
 
-    def forward(self, x, edge_index):
-        adj_mat = build_adj_mat(x, edge_index)
+    def forward(self, x, adj_mat):
         x = self.att1(x, adj_mat)
         x = self.dropout(x)
         logits = self.fc1(x)

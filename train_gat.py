@@ -8,6 +8,7 @@ import torch.optim as optim
 
 import wandb
 from GAT import GAT
+from utils import build_adj_mat
 
 with open("configGAT.yaml", "r") as file:
     config = yaml.safe_load(file)
@@ -32,7 +33,9 @@ dataset = Planetoid(
 data = dataset[0]  # there is only one graph
 # One hot encoding labels for classification task
 data.y = F.one_hot(data.y).float()
+data.adj_mat = build_adj_mat(data.x, data.edge_index)
 
+print(data.adj_mat.shape)
 
 model = GAT(
     node_dim=node_dim, hidden_dim=hidden_dim, n_classes=n_classes, dropout=dropout
@@ -51,14 +54,14 @@ for i in range(n_epochs):
     batch_mask[batch] = True
 
     optimizer.zero_grad()
-    y_pred = model(data.x, data.edge_index)
+    y_pred = model(data.x, data.adj_mat)
     train_loss = loss_fn(y_pred[batch_mask], data.y[batch_mask])
     train_loss.backward()
     optimizer.step()
 
     with torch.no_grad():
         model.eval()
-        y_pred = model(data.x, data.edge_index)[data.val_mask]
+        y_pred = model(data.x, data.adj_mat)[data.val_mask]
         y_true = data.y[data.val_mask]
         valid_loss = loss_fn(y_pred, y_true)
         labels_pred = torch.argmax(y_pred, dim=1)

@@ -22,7 +22,7 @@ def get_learning_rate(optimizer):
 def build_adj_mat(node_features, edge_index):
     """Build the adjacency matrix of a graph from edge_index that looks like this: [[1, 4, 5, 6], [2, 3, 3, 5]]
     cf. https://huggingface.co/datasets/graphs-datasets/ZINC for more details"""
-    n_nodes = len(node_features)
+    n_nodes = node_features.shape[0]
     n_edges = len(edge_index[0])
     adj_mat = torch.zeros((n_nodes, n_nodes))
     for i in range(n_edges):
