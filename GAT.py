@@ -6,19 +6,18 @@ from utils import build_adj_mat
 
 
 class GAT(nn.Module):
-    def __init__(self, node_dim, hidden_dim, n_classes):
+    def __init__(self, node_dim, hidden_dim, n_classes, dropout):
         super(GAT, self).__init__()
-        self.att1 = AttentionLayer(
-            node_dim, hidden_dim
-        )  # 1433 is node dim, 3000 is hidden dim
-        self.fc3 = nn.Linear(
-            hidden_dim, n_classes
-        )  # 7 classes for each node, 50 input dim
+        self.att1 = AttentionLayer(node_dim, hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+        self.fc1 = nn.Linear(hidden_dim, n_classes)
 
     def forward(self, x, edge_index):
         adj_mat = build_adj_mat(x, edge_index)
         x = self.att1(x, adj_mat)
-        logits = self.fc3(x)
+        x = self.dropout(x)
+        logits = self.fc1(x)
+        logits = self.dropout(logits)
         return logits
 
 

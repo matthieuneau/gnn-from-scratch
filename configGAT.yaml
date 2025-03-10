@@ -3,6 +3,12 @@ hidden_dim: 64 # for now. Review when adding multiple heads
 n_attention: 1 # add multiple heads later
 n_layers: 1 # add more layers later if necessary
 lr: 0.005
-batch_size: 2
+batch_size: 16
 n_classes: 7
 n_epochs: 500
+dropout: 0.6
+
+# Just like in the GAT paper
+n_train: 140
+n_val: 500
+n_test: 1000
