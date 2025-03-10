@@ -1,0 +1,8 @@
+node_dim: 1433 # the proper dim for the Cora dataset
+hidden_dim: 64 # for now. Review when adding multiple heads
+n_attention: 1 # add multiple heads later
+n_layers: 1 # add more layers later if necessary
+lr: 0.005
+batch_size: 2
+n_classes: 7
+n_epochs: 500
