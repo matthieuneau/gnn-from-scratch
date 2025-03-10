@@ -2,18 +2,21 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
-from utils import build_adj_mat
-
 
 class GAT(nn.Module):
-    def __init__(self, node_dim, hidden_dim, n_classes, dropout):
+    def __init__(self, node_dim, hidden_dim, n_classes, n_heads, dropout):
         super(GAT, self).__init__()
-        self.att1 = AttentionLayer(node_dim, hidden_dim)
+        self.n_heads = n_heads
+        self.attention = nn.ModuleList(
+            AttentionLayer(node_dim, hidden_dim) for _ in range(n_heads)
+        )
         self.dropout = nn.Dropout(dropout)
-        self.fc1 = nn.Linear(hidden_dim, n_classes)
+        self.fc1 = nn.Linear(hidden_dim * n_heads, n_classes)
 
     def forward(self, x, adj_mat):
-        x = self.att1(x, adj_mat)
+        x = torch.cat(
+            [self.attention[i](x, adj_mat) for i in range(self.n_heads)], dim=1
+        )
         x = self.dropout(x)
         logits = self.fc1(x)
         logits = self.dropout(logits)

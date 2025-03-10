@@ -25,6 +25,7 @@ n_train = config["n_train"]
 n_val = config["n_val"]
 n_test = config["n_test"]
 dropout = config["dropout"]
+n_heads = config["n_heads"]
 
 # 7 classes in the dataset. We calibrate to reproduce the GAT paper
 dataset = Planetoid(
@@ -38,7 +39,11 @@ data.adj_mat = build_adj_mat(data.x, data.edge_index)
 print(data.adj_mat.shape)
 
 model = GAT(
-    node_dim=node_dim, hidden_dim=hidden_dim, n_classes=n_classes, dropout=dropout
+    node_dim=node_dim,
+    hidden_dim=hidden_dim,
+    n_classes=n_classes,
+    n_heads=n_heads,
+    dropout=dropout,
 )
 
 loss_fn = nn.BCEWithLogitsLoss()
