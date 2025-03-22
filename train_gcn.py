@@ -8,10 +8,10 @@ from torch_geometric.datasets import Planetoid
 from tqdm import tqdm
 
 import wandb
-from GAT import GATTransductive
+from GCN import GCN
 from utils import build_adj_mat
 
-with open("configGAT.yaml", "r") as file:
+with open("configGCN.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 wandb.init(project="gnn-from-scratch", config=config)
@@ -26,7 +26,6 @@ n_train = config["n_train"]
 n_val = config["n_val"]
 n_test = config["n_test"]
 dropout = config["dropout"]
-n_heads = config["n_heads"]
 
 # 7 classes in the dataset. We calibrate to reproduce the GAT paper
 dataset = Planetoid(
@@ -39,17 +38,16 @@ data.adj_mat = build_adj_mat(data.x, data.edge_index)
 
 print(data.adj_mat.shape)
 
-model = GATTransductive(
+model = GCN(
     node_dim=node_dim,
     hidden_dim=hidden_dim,
     n_classes=n_classes,
-    n_heads=n_heads,
     dropout=dropout,
 )
 
-
 loss_fn = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-4)
+
 
 for i in tqdm(range(n_epochs)):
     model.train()

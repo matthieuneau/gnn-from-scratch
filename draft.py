@@ -47,42 +47,40 @@ model = GATTransductive(
     dropout=dropout,
 )
 
-for name, p in enumerate(model.parameters()):
-    print(name, p.shape)
 
-# loss_fn = nn.BCEWithLogitsLoss()
-# optimizer = optim.Adam(model.parameters(), lr=lr)
+loss_fn = nn.BCEWithLogitsLoss()
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-4)
 
-# for i in tqdm(range(n_epochs)):
-#     model.train()
-#     batch = np.random.choice(np.arange(n_train), size=batch_size, replace=False)
-#     batch_mask = torch.zeros_like((data.train_mask))
-#     batch_mask[batch] = True
+for i in tqdm(range(n_epochs)):
+    model.train()
+    batch = np.random.choice(np.arange(n_train), size=batch_size, replace=False)
+    batch_mask = torch.zeros_like((data.train_mask))
+    batch_mask[batch] = True
 
-#     optimizer.zero_grad()
-#     y_pred = model(data.x, data.adj_mat)
-#     train_loss = loss_fn(y_pred[batch_mask], data.y[batch_mask])
-#     train_loss.backward()
-#     optimizer.step()
+    optimizer.zero_grad()
+    y_pred = model(data.x, data.adj_mat)
+    train_loss = loss_fn(y_pred[batch_mask], data.y[batch_mask])
+    train_loss.backward()
+    optimizer.step()
 
-#     with torch.no_grad():
-#         model.eval()
-#         y_pred = model(data.x, data.adj_mat)[data.val_mask]
-#         y_true = data.y[data.val_mask]
-#         valid_loss = loss_fn(y_pred, y_true)
-#         labels_pred = torch.argmax(y_pred, dim=1)
-#         labels = torch.argmax(y_true, dim=1)
-#         accuracy = torch.sum(labels == labels_pred) / n_val
+    with torch.no_grad():
+        model.eval()
+        y_pred = model(data.x, data.adj_mat)[data.val_mask]
+        y_true = data.y[data.val_mask]
+        valid_loss = loss_fn(y_pred, y_true)
+        labels_pred = torch.argmax(y_pred, dim=1)
+        labels = torch.argmax(y_true, dim=1)
+        accuracy = torch.sum(labels == labels_pred) / n_val
 
-#     if i % 10 == 0:
-#         print(
-#             f"Epoch {i:03d} | Train Loss: {train_loss.item():.4f} | Valid Loss: {valid_loss.item():.4f} | Accuracy: {accuracy:.4f}"
-#         )
+    if i % 10 == 0:
+        print(
+            f"Epoch {i:03d} | Train Loss: {train_loss.item():.4f} | Valid Loss: {valid_loss.item():.4f} | Accuracy: {accuracy:.4f}"
+        )
 
-#     wandb.log(
-#         {
-#             "train_loss": train_loss.item(),
-#             "eval_loss": valid_loss.item(),
-#             "accuracy": accuracy,
-#         }
-#     )
+    wandb.log(
+        {
+            "train_loss": train_loss.item(),
+            "eval_loss": valid_loss.item(),
+            "accuracy": accuracy,
+        }
+    )
