@@ -1,7 +1,7 @@
 import torch
-from torch.fx import node
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.fx import node
 
 
 class VanillaCGN(nn.Module):
