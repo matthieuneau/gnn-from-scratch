@@ -1,11 +1,11 @@
 node_dim: 1433 # the proper dim for the Cora dataset
-hidden_dim: 8
+hidden_dim: 64
 n_heads: 8 # add multiple heads later
 n_layers: 1 # add more layers later if necessary
 lr: 0.005
 batch_size: 32
 n_classes: 7
-n_epochs: 2000
+n_epochs: 300
 dropout: 0.6
 
 # Just like in the GAT paper

@@ -1,10 +1,11 @@
-import torch.nn as nn
 import numpy as np
-import torch.nn.functional as F
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 import yaml
 from torch_geometric.datasets import Planetoid
-import torch.optim as optim
+from tqdm import tqdm
 
 import wandb
 from GAT import GAT
@@ -52,7 +53,7 @@ optimizer = optim.Adam(model.parameters(), lr=lr)
 #     optimizer, T_0=3, eta_min=1e-5
 # )
 
-for i in range(n_epochs):
+for i in tqdm(range(n_epochs)):
     model.train()
     batch = np.random.choice(np.arange(n_train), size=batch_size, replace=False)
     batch_mask = torch.zeros_like((data.train_mask))
