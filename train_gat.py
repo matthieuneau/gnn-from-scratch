@@ -47,11 +47,9 @@ model = GAT(
     dropout=dropout,
 )
 
+
 loss_fn = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=lr)
-# scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
-#     optimizer, T_0=3, eta_min=1e-5
-# )
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-4)
 
 for i in tqdm(range(n_epochs)):
     model.train()
