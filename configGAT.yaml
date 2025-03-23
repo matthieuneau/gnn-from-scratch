@@ -1,14 +1,30 @@
-node_dim: 1433 # the proper dim for the Cora dataset
-hidden_dim: 8
-n_heads: 8 # add multiple heads later
-n_layers: 1 # add more layers later if necessary
-lr: 0.001
-batch_size: 32
-n_classes: 7
-n_epochs: 300
-dropout: 0.6
+PPI:
+  node_dim: 50
+  n_classes: 121
+  batch_size: 1 #TODO: handle batch > 1
+  n_epochs: 2000
+  n_heads_1: 4
+  n_heads_2: 6
+  hidden_dim: 256
+  lr: 0.005
 
-# Just like in the GAT paper
-n_train: 140
-n_val: 500
-n_test: 1000
+  # Just like in the paper
+  n_train: 20
+  n_val: 2
+  n_test: 2
+
+
+Cora:
+  node_dim: 1433 # the proper dim for the Cora dataset
+  hidden_dim: 8
+  n_heads: 8 
+  lr: 0.001
+  batch_size: 32
+  n_classes: 7
+  n_epochs: 300
+  dropout: 0.6
+
+  # Just like in the GAT paper
+  n_train: 140
+  n_val: 500
+  n_test: 1000
