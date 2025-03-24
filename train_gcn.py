@@ -11,8 +11,9 @@ import wandb
 from GCN import GCN
 from utils import build_adj_mat
 
-with open("configGCN.yaml", "r") as file:
+with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
+    config = config["GCN"]
 
 wandb.init(project="gnn-from-scratch", config=config)
 
@@ -26,11 +27,16 @@ n_train = config["n_train"]
 n_val = config["n_val"]
 n_test = config["n_test"]
 dropout = config["dropout"]
+weight_decay = config["weight_decay"]
+dataset_name = config["dataset"]
 
-# 7 classes in the dataset. We calibrate to reproduce the GAT paper
+# dataset = Planetoid(
+#     "./data/", "Cora", num_train_per_class=n_train, num_val=n_val, num_test=n_test
+# )
 dataset = Planetoid(
-    "./data/", "Cora", num_train_per_class=n_train, num_val=n_val, num_test=n_test
+    "./data/", dataset_name, num_train_per_class=n_train, num_val=n_val, num_test=n_test
 )
+
 data = dataset[0]  # there is only one graph
 # One hot encoding labels for classification task
 data.y = F.one_hot(data.y).float()
@@ -46,7 +52,7 @@ model = GCN(
 )
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-4)
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
 
 for i in tqdm(range(n_epochs)):

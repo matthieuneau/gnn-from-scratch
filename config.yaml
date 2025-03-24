@@ -1,9 +1,18 @@
 # FOR CGN
-n_epochs: 100
-batch_size: 1 # >1 not supported for now
-node_dim: 120
-lr: !!float 3e-5 # to enforce float when loaded
-input_dim: 1
-train_size: 10000
-eval_size: 1000
-n_layers: 4
+GCN:
+  n_epochs: 100
+  hidden_dim: 16
+  batch_size: 60    # authors say they use full batch training
+  node_dim: 500  # 1433 for CORA, 120 for PPI, 500 for PubMed
+  lr: !!float 1e-2 # to enforce float when loaded
+  dropout: 0.5
+  weight_decay: !!float 5e-4
+  n_classes: 3 # 7 for CORA, 3 for Pubmed
+  dataset: "PubMed"   # should be PubMed, Cora or PPI
+
+  # Rule is to use 20 training ex per class for most papers
+  n_train: 60
+  n_val: 500
+  n_test: 1000
+
+# GAT:

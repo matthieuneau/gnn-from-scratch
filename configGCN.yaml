@@ -1,7 +1,7 @@
 node_dim: 1433 # the proper dim for the Cora dataset
 hidden_dim: 16
 lr: 0.001
-batch_size: 32
+batch_size: 140
 n_classes: 7
 n_epochs: 300
 dropout: 0.5
