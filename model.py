@@ -15,11 +15,18 @@ class GAT_reg_class(nn.Module):
         n_heads,
         n_hidden_layers_mlp,
         dropout,
-        task
+        task,
     ):
         super().__init__()
-        if task not in ["regression", "classification", "node_classification", "link_prediction"]:
-            raise ValueError("task must be either 'regression', 'classification', 'node_classification' or 'link_prediction'")
+        if task not in [
+            "regression",
+            "classification",
+            "node_classification",
+            "link_prediction",
+        ]:
+            raise ValueError(
+                "task must be either 'regression', 'classification', 'node_classification' or 'link_prediction'"
+            )
         self.task = task
         self.n_heads = n_heads
         self.U0 = nn.Linear(input_dim, node_dim, bias=False)
@@ -27,9 +34,13 @@ class GAT_reg_class(nn.Module):
             AttentionLayer(node_dim, hidden_dim) for _ in range(n_heads)
         )
         self.dropout = nn.Dropout(dropout)
-        in_dim_MLP = hidden_dim * n_heads if task in ["classification", "regression", "node_classification"] else 2 * hidden_dim * n_heads
+        in_dim_MLP = (
+            hidden_dim * n_heads
+            if task in ["classification", "regression", "node_classification"]
+            else 2 * hidden_dim * n_heads
+        )
         self.readOutLayer = MLPReadout(
-           in_dim_MLP, output_dim, n_hidden_layers_mlp, hidden_dim, bias=True
+            in_dim_MLP, output_dim, n_hidden_layers_mlp, hidden_dim, bias=True
         )
 
     def forward(self, x, edge_index, batch=None):
@@ -81,11 +92,18 @@ class GCN_reg_class(nn.Module):
         n_hidden_layers_mlp,
         hidden_dim,
         output_dim,
-        task
+        task,
     ) -> None:
         super().__init__()
-        if task not in ["regression", "classification", "node_classification", "link_prediction"]:
-            raise ValueError("task must be either 'regression', 'classification', 'node_classification' or 'link_prediction'")
+        if task not in [
+            "regression",
+            "classification",
+            "node_classification",
+            "link_prediction",
+        ]:
+            raise ValueError(
+                "task must be either 'regression', 'classification', 'node_classification' or 'link_prediction'"
+            )
         self.task = task
         self.n_layers_conv = n_layers_conv
         self.U0 = nn.Linear(input_dim, node_dim, bias=False)
@@ -95,9 +113,13 @@ class GCN_reg_class(nn.Module):
                 for _ in range(n_layers_conv)
             ]
         )
-        in_dim_MLP = node_dim if task in ["classification", "regression", "node_classification"] else 2 * node_dim
+        in_dim_MLP = (
+            node_dim
+            if task in ["classification", "regression", "node_classification"]
+            else 2 * node_dim
+        )
         self.readOutLayer = MLPReadout(
-           in_dim_MLP, output_dim, n_hidden_layers_mlp, hidden_dim, bias=True
+            in_dim_MLP, output_dim, n_hidden_layers_mlp, hidden_dim, bias=True
         )
 
     def forward(self, x, edge_index, batch=None):
@@ -144,7 +166,6 @@ class ConvNetLayer(nn.Module):
 
 
 class MLPReadout(nn.Module):
-
     def __init__(
         self, input_dim, output_dim, n_hidden_layers_mlp, hidden_dim, bias=True
     ):  # L=nb_hidden_layers
@@ -165,7 +186,7 @@ class MLPReadout(nn.Module):
             y = F.relu(y)
         y = self.FC_layers[self.L + 1](y).squeeze()
         return y
-    
+
 
 def build_adj_mat(edge_index, num_nodes=None):
     """
@@ -197,7 +218,7 @@ def build_diffusion_matrix(edge_index, num_nodes=None):
     Returns a sparse matrix.
     """
     adj = build_adj_mat(edge_index, num_nodes)
-    
+
     # Calcul du degré (somme par ligne)
     deg = torch.sparse.sum(adj, dim=1).to_dense()  # Shape (N,)
     deg_inv_sqrt = torch.pow(deg, -0.5)
@@ -206,9 +227,10 @@ def build_diffusion_matrix(edge_index, num_nodes=None):
     # Construire D^{-1/2} * A * D^{-1/2}
     row, col = adj.indices()
     values = adj.values() * deg_inv_sqrt[row] * deg_inv_sqrt[col]
-    
+
     diffusion = torch.sparse_coo_tensor(adj.indices(), values, adj.size())
     return diffusion.coalesce()
+
 
 def batch_mean_pool(x, batch):
     """Effectue une moyenne des features par graphe"""
