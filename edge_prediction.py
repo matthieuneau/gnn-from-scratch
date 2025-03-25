@@ -38,6 +38,8 @@ hits_k_rank = config["HITS@K_rank"]
 hits_k_positive_samples = config["HITS@K_positive_samples"]
 hits_k_negative_samples = config["HITS@K_negative_samples_factor"]
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 dataset = Planetoid(
     "./data/", dataset_name, num_train_per_class=n_train, num_val=n_val, num_test=n_test
 )
@@ -54,9 +56,9 @@ train_edge_index, val_edge_index, test_edge_index = build_edge_pred_datasets(
 gcn = GCN(
     dimensions=dimensions,
     dropout=dropout,
-)
+).to(device)
 
-edge_pred = EdgePrediction(embedding_dim=dimensions[-1][1])
+edge_pred = EdgePrediction(embedding_dim=dimensions[-1][1]).to(device)
 
 loss_fn = nn.BCEWithLogitsLoss()
 optimizer_gcn = optim.Adam(gcn.parameters(), lr=lr, weight_decay=weight_decay)
@@ -70,7 +72,7 @@ optimizer_edge_pred = optim.Adam(
 #     optimizer_edge_pred, mode="min", factor=0.2, patience=5, verbose=True
 # )
 
-data.A_hat = compute_A_hat(data.x, data.edge_index)
+data.A_hat = compute_A_hat(data.x, data.edge_index).to(device)
 
 for i in tqdm(range(n_epochs)):
     gcn.train()
@@ -84,10 +86,10 @@ for i in tqdm(range(n_epochs)):
     # TODO: Inefficient for now. This recomputes batch indices at each iteration
     batch = build_classifier_batch(
         train_edge_index, node_embeddings, batch_size, negative_samples_factor
-    )
+    ).to(device)
     labels = torch.cat(
         [torch.ones(batch_size), torch.zeros(batch_size * negative_samples_factor)]
-    )
+    ).to(device)
 
     # Shuffle the batch to mix positive and negative examples
     perm = torch.randperm(batch.size(0))
@@ -106,14 +108,14 @@ for i in tqdm(range(n_epochs)):
         with torch.no_grad():
             gcn.eval()
             edge_pred.eval()
-            node_embeddings = gcn(data.x, data.A_hat)
+            node_embeddings = gcn(data.x, data.A_hat).to(device)
             batch = build_classifier_batch(
                 val_edge_index, node_embeddings, batch_size, negative_samples_factor
-            )
+            ).to(device)
             labels = torch.cat(
                 [
-                    torch.ones(batch_size),
-                    torch.zeros(batch_size * negative_samples_factor),
+                    torch.ones(batch_size, device=device),
+                    torch.zeros(batch_size * negative_samples_factor, device=device),
                 ]
             )
 
