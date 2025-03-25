@@ -45,6 +45,7 @@ dataset = Planetoid(
 )
 
 data = dataset[0]  # there is only one graph
+data.to(device)
 # # One hot encoding labels for classification task
 # data.y = F.one_hot(data.y).float()
 # data.adj_mat = build_adj_mat(data.x, data.edge_index)
