@@ -4,15 +4,19 @@ import torch.nn.functional as F
 
 
 class GCNLayer(nn.Module):
-    """For now, set the hidden dim to be the same as the output dim"""
+    """For now, set the hidden dim to be the avg of input and output dim, to smooth the dimension variation"""
 
     def __init__(self, input_dim, output_dim):
         super(GCNLayer, self).__init__()
         self.W0 = nn.Parameter(
-            nn.init.xavier_uniform_(torch.empty(input_dim, output_dim))
+            nn.init.xavier_uniform_(
+                torch.empty(input_dim, (output_dim + input_dim) // 2)
+            )
         )
         self.W1 = nn.Parameter(
-            nn.init.xavier_uniform_(torch.empty(output_dim, output_dim))
+            nn.init.xavier_uniform_(
+                torch.empty((output_dim + input_dim) // 2, output_dim)
+            )
         )
 
     def forward(self, x, A_hat):
@@ -21,13 +25,13 @@ class GCNLayer(nn.Module):
 
 
 class GCN(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, n_layers, dropout):
+    def __init__(self, dimensions: list[tuple[int, int]], dropout):
+        """dimensions: list of tuples (input_dim, output_dim) for each layer"""
         super(GCN, self).__init__()
         self.layers = nn.ModuleList(
             [
-                GCNLayer(input_dim, hidden_dim),
-                *[GCNLayer(hidden_dim, hidden_dim) for _ in range(n_layers - 2)],
-                GCNLayer(hidden_dim, output_dim),
+                GCNLayer(dimensions[i][0], dimensions[i][1])
+                for i in range(len(dimensions))
             ]
         )
         self.dropout = nn.Dropout(dropout)

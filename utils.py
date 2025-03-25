@@ -111,13 +111,12 @@ def build_classifier_batch(
         ]
     )
 
-    # Now add negative examples. We take them at random and don't check if they are actual edges since it is very unlikely
+    # Add negative examples. We take them at random and don't check if they are actual edges since it is very unlikely. We allow self loops as negative examples
     random_edges = np.random.choice(
         node_embeddings.shape[0],
         (batch_size * negative_samples_factor, 2),
         replace=True,
     )
-    random_edges = filter(lambda x: x[0] != x[1], random_edges)
     negative_samples_factor = torch.stack(
         [
             torch.cat([node_embeddings[edge[0]], node_embeddings[edge[1]]])
