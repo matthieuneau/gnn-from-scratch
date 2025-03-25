@@ -21,6 +21,10 @@ with open("configEdgePred.yaml", "r") as file:
     config = config["GCN"]
 
 wandb.init(project="gnn-from-scratch", config=config)
+# save config and current file
+wandb.save("configEdgePred.yaml", policy="now")
+wandb.save(__file__)
+wandb.save("GCN.py")
 
 dimensions = [tuple(dim) for dim in config["dimensions"]]
 negative_samples_factor = config["negative_samples_factor"]
@@ -66,12 +70,12 @@ optimizer_gcn = optim.Adam(gcn.parameters(), lr=lr, weight_decay=weight_decay)
 optimizer_edge_pred = optim.Adam(
     edge_pred.parameters(), lr=lr, weight_decay=weight_decay
 )
-# scheduler_gcn = optim.lr_scheduler.ReduceLROnPlateau(
-#     optimizer_gcn, mode="min", factor=0.2, patience=5, verbose=True
-# )
-# scheduler_edge_pred = optim.lr_scheduler.ReduceLROnPlateau(
-#     optimizer_edge_pred, mode="min", factor=0.2, patience=5, verbose=True
-# )
+scheduler_gcn = optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer_gcn, mode="min", factor=0.2, patience=10, verbose=True
+)
+scheduler_edge_pred = optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer_edge_pred, mode="min", factor=0.2, patience=10, verbose=True
+)
 
 data.A_hat = compute_A_hat(data.x, data.edge_index).to(device)
 
@@ -102,8 +106,8 @@ for i in tqdm(range(n_epochs)):
     train_loss.backward()
     optimizer_edge_pred.step()
     optimizer_gcn.step()
-    # scheduler_gcn.step(train_loss)
-    # scheduler_edge_pred.step(train_loss)
+    scheduler_gcn.step(train_loss)
+    scheduler_edge_pred.step(train_loss)
 
     if i % 10 == 0:
         with torch.no_grad():
