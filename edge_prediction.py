@@ -42,7 +42,15 @@ hits_k_rank = config["HITS@K_rank"]
 hits_k_positive_samples = config["HITS@K_positive_samples"]
 hits_k_negative_samples = config["HITS@K_negative_samples_factor"]
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Keep device to cpu for now because we don't use dataloaders properly so it's faster that way
+# device = torch.device(
+#     "cuda"
+#     if torch.cuda.is_available()
+#     else "mps"
+#     if torch.backends.mps.is_available()
+#     else "cpu"
+# )
+device = "cpu"
 
 dataset = Planetoid(
     "./data/", dataset_name, num_train_per_class=n_train, num_val=n_val, num_test=n_test
