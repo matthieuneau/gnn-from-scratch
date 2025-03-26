@@ -159,7 +159,7 @@ for i in tqdm(range(n_epochs)):
             {
                 "train_loss": train_loss.item(),
                 "eval_loss": val_loss.item(),
-                "accuracy": val_hits_k_accuracy,
+                "HITS@k": val_hits_k_accuracy,
                 "gcn_lr": optimizer_gcn.param_groups[0]["lr"],
                 "edge_pred_lr": optimizer_edge_pred.param_groups[0]["lr"],
             },

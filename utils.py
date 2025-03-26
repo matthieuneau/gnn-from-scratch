@@ -100,7 +100,6 @@ def build_classifier_batch(
     negative_sampling: int, number of negative examples to sample for each positive example"""
 
     # Start by building the positive examples
-    list(zip(edge_index[0].tolist(), edge_index[1].tolist()))
     batch_indices = np.random.choice(edge_index.shape[1], batch_size, replace=False)
     edges = list(zip(edge_index[0].tolist(), edge_index[1].tolist()))
     pairs = [edge for i, edge in enumerate(edges) if i in batch_indices]
