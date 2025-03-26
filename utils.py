@@ -3,6 +3,8 @@ import torch
 from pydantic import Field
 from typing_extensions import Annotated
 
+from models import *  # noqa: F403
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -36,6 +38,11 @@ def build_adj_mat(node_features, edge_index):
         adj_mat[edge_index[0][i], edge_index[1][i]] = 1
     adj_mat += torch.eye(adj_mat.shape[0])  # Ensures deg_i > 0 and stabilize training
     return adj_mat
+
+
+def build_model(config, model_name, device):
+    model = eval(model_name)(**config[model_name])
+    return model.to(device)
 
 
 # Build the adjacency matrices for the dataset

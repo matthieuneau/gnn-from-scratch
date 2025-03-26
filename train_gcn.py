@@ -8,7 +8,7 @@ from torch_geometric.datasets import Planetoid
 from tqdm import tqdm
 
 import wandb
-from GCN import GCN
+from models import GCN
 from utils import build_adj_mat
 
 with open("config.yaml", "r") as file:
