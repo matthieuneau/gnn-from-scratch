@@ -101,7 +101,7 @@ def compute_A_hat(node_features, edge_index):
 
 
 def build_classifier_batch(
-    edge_index, node_embeddings, batch_size: int, negative_samples_factor: int
+    edge_index, node_embeddings, batch_size: int, negative_samples: int
 ) -> torch.Tensor:
     """Build a batch of positive and negative examples for the edge prediction task
     negative_sampling: int, number of negative examples to sample for each positive example"""
@@ -120,16 +120,16 @@ def build_classifier_batch(
     # Add negative examples. We take them at random and don't check if they are actual edges since it is very unlikely. We allow self loops as negative examples
     random_edges = np.random.choice(
         node_embeddings.shape[0],
-        (batch_size * negative_samples_factor, 2),
+        (batch_size * negative_samples, 2),
         replace=True,
     )
-    negative_samples_factor = torch.stack(
-        [
-            torch.cat([node_embeddings[edge[0]], node_embeddings[edge[1]]])
-            for edge in random_edges
-        ]
-    )
 
-    batch = torch.cat([positive_samples, negative_samples_factor])
+    random_edges1 = random_edges[:, 0]
+    random_edges2 = random_edges[:, 1]
+    negative_samples1 = node_embeddings[random_edges1]
+    negative_samples2 = node_embeddings[random_edges2]
+    negative_samples = torch.cat([negative_samples1, negative_samples2], dim=1)
+
+    batch = torch.cat([positive_samples, negative_samples], dim=0)
 
     return batch

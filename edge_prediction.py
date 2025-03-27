@@ -43,6 +43,7 @@ device = torch.device(
     if torch.backends.mps.is_available()
     else "cpu"
 )
+
 # device = "cpu"
 
 dataset = Planetoid(
@@ -51,9 +52,6 @@ dataset = Planetoid(
 
 data = dataset[0]  # there is only one graph
 data.to(device)
-# # One hot encoding labels for classification task
-# data.y = F.one_hot(data.y).float()
-# data.adj_mat = build_adj_mat(data.x, data.edge_index)
 
 train_edge_index, val_edge_index, test_edge_index = build_edge_pred_datasets(
     data, n_train, n_val, n_test
@@ -68,10 +66,10 @@ optimizer_classifier = optim.Adam(
     classifier.parameters(), lr=lr, weight_decay=weight_decay
 )
 scheduler_model = optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_model, mode="min", factor=0.2, patience=25, verbose=True
+    optimizer_model, mode="min", factor=0.5, patience=25, verbose=True, min_lr=1e-4
 )
 scheduler_classifier = optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_classifier, mode="min", factor=0.2, patience=25, verbose=True
+    optimizer_classifier, mode="min", factor=0.5, patience=25, verbose=True, min_lr=1e-4
 )
 
 if model.__class__.__name__ == "GCN":
@@ -113,7 +111,7 @@ for i in tqdm(range(n_epochs)):
     scheduler_model.step(train_loss)
     scheduler_classifier.step(train_loss)
 
-    if i % 10 == 0:
+    if (i + 0) % 10 == 0:
         with torch.no_grad():
             model.eval()
             classifier.eval()

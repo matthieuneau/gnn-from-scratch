@@ -27,14 +27,16 @@ class AttentionLayer(nn.Module):
 
 # TODO: Extend to more than 2 layers
 class GAT(nn.Module):
-    def __init__(self, node_dim, hidden_dim, n_heads_1, n_heads_2):
+    def __init__(self, dimensions: list[list[int, int]], n_heads: list[int]):
         super(GAT, self).__init__()
         self.attention1 = nn.ModuleList(
-            AttentionLayer(node_dim, hidden_dim) for _ in range(n_heads_1)
+            AttentionLayer(dimensions[0][0], dimensions[0][1])
+            for _ in range(n_heads[0])
         )
         # only one head for second layer
         self.attention2 = nn.ModuleList(
-            AttentionLayer(hidden_dim * n_heads_1, hidden_dim) for _ in range(n_heads_2)
+            AttentionLayer(dimensions[1][0], dimensions[1][1])
+            for _ in range(n_heads[1])
         )
 
     def forward(self, data):
