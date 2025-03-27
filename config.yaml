@@ -1,19 +1,20 @@
-model_name: GCN
+backbone: GAT
+head: EdgePrediction
 
 GCN:
-  dimensions: [[500, 300], [300, 100], [100, 50]]  # initial node dim is 1433 for CORA, 120 for PPI, 500 for PubMed
+  dimensions: [[1433, 300], [300, 100], [100, 50]]  # initial node dim is 1433 for CORA, 120 for PPI, 500 for PubMed
   dropout: 0.5
 
 weight_decay: !!float 5e-4
-lr: !!float 1e-3 # to enforce float when loaded
-n_epochs: 300
+lr: !!float 5e-4 # to enforce float when loaded
+n_epochs: 500
 batch_size: 256
 
 n_classes: 3 # 7 for CORA, 3 for Pubmed
 dataset: "Cora"   # should be PubMed, Cora or PPI
 HITS@K_positive_samples: 50   # It should be 1 according to the benchmark paper   
 HITS@K_negative_samples_factor: 1000
-HITS@K_rank: 500   # if positive sample ranked lower than that, it fails
+HITS@K_rank: 50   # if positive sample ranked lower than that, it fails
 negative_samples_factor: 4
 
 n_train: 0.7
@@ -22,7 +23,11 @@ n_test: 0.1
 
 
 GAT:
-  n_heads1: 8
-  n_heads2: 8
-  node_dim: 500
-  hiden_dim: 50
+  n_heads_1: 8
+  n_heads_2: 8
+  node_dim: 1433
+  hidden_dim: 50
+
+
+EdgePrediction:
+  embedding_dim: 400

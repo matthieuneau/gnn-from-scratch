@@ -59,8 +59,8 @@ train_edge_index, val_edge_index, test_edge_index = build_edge_pred_datasets(
     data, n_train, n_val, n_test
 )
 
-model = build_model(config, "GCN", device)
-classifier = build_model(config, "EdgePrediction", device)
+model = build_model(config, config["backbone"], device)
+classifier = build_model(config, config["head"], device)
 
 loss_fn = nn.BCEWithLogitsLoss()
 optimizer_model = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -68,10 +68,10 @@ optimizer_classifier = optim.Adam(
     classifier.parameters(), lr=lr, weight_decay=weight_decay
 )
 scheduler_model = optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_model, mode="min", factor=0.2, patience=10, verbose=True
+    optimizer_model, mode="min", factor=0.2, patience=25, verbose=True
 )
 scheduler_classifier = optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer_classifier, mode="min", factor=0.2, patience=10, verbose=True
+    optimizer_classifier, mode="min", factor=0.2, patience=25, verbose=True
 )
 
 if model.__class__.__name__ == "GCN":
@@ -92,10 +92,13 @@ for i in tqdm(range(n_epochs)):
     # TODO: Inefficient for now. This recomputes batch indices at each iteration
     batch = build_classifier_batch(
         train_edge_index, node_embeddings, batch_size, negative_samples_factor
-    ).to(device)
+    )
     labels = torch.cat(
-        [torch.ones(batch_size), torch.zeros(batch_size * negative_samples_factor)]
-    ).to(device)
+        [
+            torch.ones(batch_size, device=device),
+            torch.zeros(batch_size * negative_samples_factor, device=device),
+        ]
+    )
 
     # Shuffle the batch to mix positive and negative examples
     perm = torch.randperm(batch.size(0))
@@ -114,10 +117,10 @@ for i in tqdm(range(n_epochs)):
         with torch.no_grad():
             model.eval()
             classifier.eval()
-            node_embeddings = model(data).to(device)
+            node_embeddings = model(data)
             batch = build_classifier_batch(
                 val_edge_index, node_embeddings, batch_size, negative_samples_factor
-            ).to(device)
+            )
             labels = torch.cat(
                 [
                     torch.ones(batch_size, device=device),
