@@ -78,6 +78,10 @@ if model.__class__.__name__ == "GCN":
 if model.__class__.__name__ == "GAT":
     data.adj_mat = build_adj_mat(data.x, data.edge_index).to(device)
 
+best_val_loss = float("inf")
+patience = 5
+patience_counter = 0
+
 for i in tqdm(range(n_epochs)):
     model.train()
     classifier.train()
@@ -129,7 +133,6 @@ for i in tqdm(range(n_epochs)):
             logits = classifier(batch)
             val_loss = loss_fn(logits.reshape(-1), labels.reshape(-1))
 
-            # TODO: augment the number of hitsK tested
             hits_k_batch = build_classifier_batch(
                 val_edge_index,
                 node_embeddings,
@@ -148,6 +151,12 @@ for i in tqdm(range(n_epochs)):
         print(
             f"Epoch {i:03d} | Train Loss: {train_loss.item():.4f} | Valid Loss: {val_loss.item():.4f} | HITS@{hits_k_rank} accuracy: {val_hits_k_accuracy:.4f}"
         )
+        # Early stopping check
+        if val_loss.item() < best_val_loss:
+            best_val_loss = val_loss.item()
+            patience_counter = 0
+        else:
+            patience_counter += 1
 
         wandb.log(
             {

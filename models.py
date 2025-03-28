@@ -104,7 +104,8 @@ class GCN(nn.Module):
 
     def forward(self, data):
         x, A_hat = data.x, data.A_hat
-        for layer in self.layers:
+        for i, layer in enumerate(self.layers):
             x = layer(x, A_hat)
-            x = self.dropout(x)
+            if i != len(self.layers) - 1:
+                x = self.dropout(x)
         return x
