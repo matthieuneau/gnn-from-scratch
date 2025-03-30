@@ -6,5 +6,5 @@ n_classes: 7 # 7 for CORA, 3 for Pubmed, 121 for PPI
 dataset: "Cora"   # should be PubMed, Cora or PPI
 batch_size: 128
 n_heads: 8
-hidden_dim: 16
+hidden_dim: 8
 dropout: 0.6
