@@ -18,6 +18,7 @@ with open("configGATInductive.yaml", "r") as file:
 wandb.init(project="gnn-from-scratch", config=config)
 
 lr = config["lr"]
+batch_size = config["batch_size"]
 node_dim = config["node_dim"]
 n_classes = config["n_classes"]
 n_epochs = config["n_epochs"]
@@ -68,12 +69,14 @@ f1_metric = MultilabelF1Score(num_labels=num_labels, average="micro").to(device)
 for i in tqdm(range(n_epochs)):
     model.train()
     optimizer.zero_grad()
-    index = np.random.choice(np.arange(n_train))  # TODO: handle batch_size >1
-    data = train_dataset[index]
+    for _ in range(batch_size):
+        index = np.random.choice(np.arange(n_train))
+        data = train_dataset[index]
 
-    y_pred = model(data.x, adj_mat_hashmap["train"][index])
-    train_loss = loss_fn(y_pred, data.y)
-    train_loss.backward()
+        y_pred = model(data.x, adj_mat_hashmap["train"][index])
+        train_loss = loss_fn(y_pred, data.y)
+        train_loss /= batch_size
+        train_loss.backward()
     optimizer.step()
 
     with torch.no_grad():

@@ -25,6 +25,7 @@ batch_size = config["batch_size"]
 n_epochs = config["n_epochs"]
 dropout = config["dropout"]
 n_heads = config["n_heads"]
+weight_decay = config["weight_decay"]
 
 device = (
     "cuda"
@@ -55,7 +56,7 @@ model_summary = summary(model)
 wandb.config.update({"total_params": model_summary.total_params})
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-4)
+optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
 for i in tqdm(range(n_epochs)):
     model.train()
