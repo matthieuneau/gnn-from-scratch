@@ -8,7 +8,7 @@ from torch_geometric.datasets import Planetoid
 from tqdm import tqdm
 
 import wandb
-from GAT import GATTransductive
+from models import GATTransductive
 from utils import build_adj_mat
 
 with open("configGAT.yaml", "r") as file:

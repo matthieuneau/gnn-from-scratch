@@ -8,12 +8,11 @@ from torchmetrics.classification import MultilabelF1Score
 from tqdm import tqdm
 
 import wandb
-from GAT import GATInductive
+from models import GATInductive
 from utils import build_adj_mat_hashmap
 
-with open("configGAT.yaml", "r") as file:
+with open("configGATInductive.yaml", "r") as file:
     config = yaml.safe_load(file)
-    config = config["PPI"]
 
 wandb.init(project="gnn-from-scratch", config=config)
 
