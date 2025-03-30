@@ -5,37 +5,42 @@ import torch.nn.functional as F
 import torch.optim as optim
 import yaml
 from torch_geometric.datasets import Planetoid
+from torchinfo import summary
 from tqdm import tqdm
 
 import wandb
 from models import GATTransductive
 from utils import build_adj_mat
 
-with open("configGAT.yaml", "r") as file:
+with open("configGATTransductive.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 wandb.init(project="gnn-from-scratch", config=config)
 
 node_dim = config["node_dim"]
 hidden_dim = config["hidden_dim"]
-batch_size = config["batch_size"]
 lr = config["lr"]
 n_classes = config["n_classes"]
+batch_size = config["batch_size"]
 n_epochs = config["n_epochs"]
-n_train = config["n_train"]
-n_val = config["n_val"]
-n_test = config["n_test"]
 dropout = config["dropout"]
 n_heads = config["n_heads"]
 
-# 7 classes in the dataset. We calibrate to reproduce the GAT paper
-dataset = Planetoid(
-    "./data/", "Cora", num_train_per_class=n_train, num_val=n_val, num_test=n_test
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
 )
-data = dataset[0]  # there is only one graph
-# One hot encoding labels for classification task
-data.y = F.one_hot(data.y).float()
-data.adj_mat = build_adj_mat(data.x, data.edge_index)
+
+# 7 classes in the dataset. We calibrate to reproduce the GAT paper
+dataset = Planetoid(root="./data/", name="Cora")
+n_train = dataset[0].train_mask.sum().item()
+n_val = dataset[0].val_mask.sum().item()
+n_test = dataset[0].test_mask.sum().item()
+data = dataset[0].to(device)  # there is only one graph
+data.adj_mat = build_adj_mat(data.x, data.edge_index, device)
 
 print(data.adj_mat.shape)
 
@@ -45,8 +50,9 @@ model = GATTransductive(
     n_classes=n_classes,
     n_heads=n_heads,
     dropout=dropout,
-)
-
+).to(device)
+model_summary = summary(model)
+wandb.config.update({"total_params": model_summary.total_params})
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=5e-4)

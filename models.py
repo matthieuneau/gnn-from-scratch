@@ -112,8 +112,9 @@ class GCN(nn.Module):
 
 
 class GATInductive(nn.Module):
-    def __init__(self, node_dim, hidden_dim, n_classes, n_heads_1, n_heads_2):
+    def __init__(self, node_dim, hidden_dim, n_classes, n_heads_1, n_heads_2, dropout):
         super(GATInductive, self).__init__()
+        self.dropout = nn.Dropout(dropout)
         self.attention1 = nn.ModuleList(
             AttentionLayer(node_dim, hidden_dim) for _ in range(n_heads_1)
         )
@@ -128,11 +129,14 @@ class GATInductive(nn.Module):
     def forward(self, x, adj_mat):
         x = torch.cat([attention(x, adj_mat) for attention in self.attention1], dim=1)
         x = F.elu(x)
+        x = self.dropout(x)  # Apply dropout after activation
         residual = x
         x = torch.cat([attention(x, adj_mat) for attention in self.attention2], dim=1)
         x = F.elu(x) + residual
+        x = self.dropout(x)  # Apply dropout after activation and residual connection
         logits = torch.mean(
-            torch.stack([attention(x, adj_mat) for attention in self.attention3]), dim=0
+            torch.stack([attention(x, adj_mat) for attention in self.attention3]),
+            dim=0,
         )
         return logits
 

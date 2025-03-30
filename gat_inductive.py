@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import yaml
 from torch_geometric.datasets import PPI
+from torchinfo import summary
 from torchmetrics.classification import MultilabelF1Score
 from tqdm import tqdm
 
@@ -23,14 +24,25 @@ n_epochs = config["n_epochs"]
 n_train = config["n_train"]
 n_val = config["n_val"]
 n_test = config["n_test"]
-batch_size = config["batch_size"]
 hidden_dim = config["hidden_dim"]
 n_heads_1 = config["n_heads_1"]
 n_heads_2 = config["n_heads_2"]
+dropout = config["dropout"]
 
-train_dataset = PPI("./data/", split="train")
-val_dataset = PPI("./data/", split="val")
-test_dataset = PPI("./data/", split="test")
+# device = "cpu"
+
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
+
+train_dataset = PPI("./data/", split="train").to(device)
+val_dataset = PPI("./data/", split="val").to(device)
+test_dataset = PPI("./data/", split="test").to(device)
+
 
 model = GATInductive(
     node_dim=node_dim,
@@ -38,15 +50,20 @@ model = GATInductive(
     n_classes=n_classes,
     n_heads_1=n_heads_1,
     n_heads_2=n_heads_2,
-)
+    dropout=dropout,
+).to(device)
+model_summary = summary(model)
+wandb.config.update({"total_params": model_summary.total_params})
 
 optimizer = optim.Adam(model.parameters(), lr=lr)
 loss_fn = nn.BCEWithLogitsLoss()
 
-adj_mat_hashmap = build_adj_mat_hashmap(train_dataset, val_dataset, test_dataset)
+adj_mat_hashmap = build_adj_mat_hashmap(
+    train_dataset, val_dataset, test_dataset, device
+)
 
 num_labels = train_dataset[0].y.shape[1]
-f1_metric = MultilabelF1Score(num_labels=num_labels, average="micro")
+f1_metric = MultilabelF1Score(num_labels=num_labels, average="micro").to(device)
 
 for i in tqdm(range(n_epochs)):
     model.train()

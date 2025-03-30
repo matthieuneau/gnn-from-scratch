@@ -1,0 +1,10 @@
+node_dim: 1433  # 50 for Cora
+n_epochs: 50
+weight_decay: !!float 1e-4
+lr: !!float 5e-4 
+n_classes: 7 # 7 for CORA, 3 for Pubmed, 121 for PPI
+dataset: "Cora"   # should be PubMed, Cora or PPI
+batch_size: 128
+n_heads: 8
+hidden_dim: 16
+dropout: 0.6

@@ -1,13 +1,13 @@
 node_dim: 50  # 50 for PPI
-n_epochs: 200
+n_epochs: 2000
 weight_decay: !!float 1e-4
-lr: !!float 1e-3 # to enforce float when loaded
-batch_size: 256
+lr: !!float 1e-3
 n_classes: 121 # 7 for CORA, 3 for Pubmed, 121 for PPI
 dataset: "PPI"   # should be PubMed, Cora or PPI
 n_heads_1: 8
 n_heads_2: 1
-hidden_dim: 8
+hidden_dim: 64
+dropout: 0.6
 
 n_train: 20
 n_val: 2
