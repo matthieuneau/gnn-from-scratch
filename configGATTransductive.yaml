@@ -1,5 +1,5 @@
 node_dim: 1433  # 50 for Cora
-n_epochs: 50
+n_epochs: 500
 weight_decay: !!float 5e-4
 lr: !!float 5e-4
 n_classes: 7 # 7 for CORA, 3 for Pubmed, 121 for PPI

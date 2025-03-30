@@ -59,6 +59,14 @@ wandb.config.update({"total_params": model_summary.total_params})
 optimizer = optim.Adam(model.parameters(), lr=lr)
 loss_fn = nn.BCEWithLogitsLoss()
 
+lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=100,
+    min_lr=lr / 8,
+)
+
 adj_mat_hashmap = build_adj_mat_hashmap(
     train_dataset, val_dataset, test_dataset, device
 )
@@ -78,6 +86,7 @@ for i in tqdm(range(n_epochs)):
         train_loss /= batch_size
         train_loss.backward()
     optimizer.step()
+    lr_scheduler.step(train_loss)
 
     with torch.no_grad():
         model.eval()

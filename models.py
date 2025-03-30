@@ -154,11 +154,11 @@ class GATTransductive(nn.Module):
         # self.fc1 = nn.Linear(hidden_dim * n_heads, n_classes)
 
     def forward(self, x, adj_mat):
+        # x = self.dropout(x)
         x = torch.cat(
             [self.attention1[i](x, adj_mat) for i in range(self.n_heads)], dim=1
         )
         x = F.elu(x)
         x = self.dropout(x)
         logits = self.attention2(x, adj_mat)
-        logits = self.dropout(logits)
         return logits

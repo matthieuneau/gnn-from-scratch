@@ -57,6 +57,13 @@ wandb.config.update({"total_params": model_summary.total_params})
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=100,
+    min_lr=lr / 8,
+)
 
 for i in tqdm(range(n_epochs)):
     model.train()
@@ -69,6 +76,7 @@ for i in tqdm(range(n_epochs)):
     train_loss = loss_fn(y_pred[batch_mask], data.y[batch_mask])
     train_loss.backward()
     optimizer.step()
+    lr_scheduler.step(train_loss)
 
     with torch.no_grad():
         model.eval()
@@ -76,8 +84,7 @@ for i in tqdm(range(n_epochs)):
         y_true = data.y[data.val_mask]
         valid_loss = loss_fn(y_pred, y_true)
         labels_pred = torch.argmax(y_pred, dim=1)
-        labels = torch.argmax(y_true, dim=1)
-        accuracy = torch.sum(labels == labels_pred) / n_val
+        accuracy = torch.sum(labels_pred == y_true) / n_val
 
     if i % 10 == 0:
         print(
