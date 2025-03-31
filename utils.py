@@ -87,9 +87,9 @@ def build_edge_pred_datasets(
     return train_data, val_data, test_data
 
 
-def compute_A_hat(node_features, edge_index):
-    A = build_adj_mat(node_features, edge_index)
-    A_tilde = A + torch.eye(A.shape[0])
+def compute_A_hat(data, device):
+    A = build_adj_mat(data.x, data.edge_index, device)
+    A_tilde = A + torch.eye(A.shape[0]).to(device)
     D_tilde_diagonal = torch.sum(A_tilde, axis=1)
     A_hat = (
         torch.diag(D_tilde_diagonal**-0.5)

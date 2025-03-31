@@ -5,51 +5,54 @@ import torch.nn.functional as F
 import torch.optim as optim
 import yaml
 from torch_geometric.datasets import Planetoid
+from torchinfo import summary
 from tqdm import tqdm
 
 import wandb
 from models import GCN
-from utils import build_adj_mat
+from utils import build_adj_mat, compute_A_hat
 
-with open("config.yaml", "r") as file:
+with open("configGCNTransductive.yaml", "r") as file:
     config = yaml.safe_load(file)
-    config = config["GCN"]
 
 wandb.init(project="gnn-from-scratch", config=config)
 
-node_dim = config["node_dim"]
-hidden_dim = config["hidden_dim"]
 batch_size = config["batch_size"]
 lr = config["lr"]
+dimensions = config["dimensions"]
 n_classes = config["n_classes"]
 n_epochs = config["n_epochs"]
-n_train = config["n_train"]
-n_val = config["n_val"]
-n_test = config["n_test"]
 dropout = config["dropout"]
 weight_decay = config["weight_decay"]
 dataset_name = config["dataset"]
+dropout = config["dropout"]
 
-# dataset = Planetoid(
-#     "./data/", "Cora", num_train_per_class=n_train, num_val=n_val, num_test=n_test
-# )
-dataset = Planetoid(
-    "./data/", dataset_name, num_train_per_class=n_train, num_val=n_val, num_test=n_test
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
 )
 
-data = dataset[0]  # there is only one graph
-# One hot encoding labels for classification task
-data.y = F.one_hot(data.y).float()
-data.adj_mat = build_adj_mat(data.x, data.edge_index)
+dataset = Planetoid("./data/", "Cora")
 
-print(data.adj_mat.shape)
+data = dataset[0].to(device)  # there is only one graph
+# One hot encoding labels for classification task
+data.adj_mat = build_adj_mat(data.x, data.edge_index, device)
+n_train = data.train_mask.sum().item()
+n_val = data.val_mask.sum().item()
+n_test = data.test_mask.sum().item()
+
+data.A_hat = compute_A_hat(data, device)
 
 model = GCN(
-    node_dim=node_dim,
-    hidden_dim=hidden_dim,
-    n_classes=n_classes,
+    dimensions=dimensions,
     dropout=dropout,
-)
+).to(device)
+model_summary = summary(model)
+wandb.config.update({"total_params": model_summary.total_params})
+
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -62,19 +65,18 @@ for i in tqdm(range(n_epochs)):
     batch_mask[batch] = True
 
     optimizer.zero_grad()
-    y_pred = model(data.x, data.adj_mat)
+    y_pred = model(data)
     train_loss = loss_fn(y_pred[batch_mask], data.y[batch_mask])
     train_loss.backward()
     optimizer.step()
 
     with torch.no_grad():
         model.eval()
-        y_pred = model(data.x, data.adj_mat)[data.val_mask]
+        y_pred = model(data)[data.val_mask]
         y_true = data.y[data.val_mask]
         valid_loss = loss_fn(y_pred, y_true)
         labels_pred = torch.argmax(y_pred, dim=1)
-        labels = torch.argmax(y_true, dim=1)
-        accuracy = torch.sum(labels == labels_pred) / n_val
+        accuracy = torch.sum(y_true == labels_pred) / n_val
 
     if i % 10 == 0:
         print(
